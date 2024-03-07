@@ -1,0 +1,24 @@
+version: "3"
+services:
+  qrda-export-service:
+    image: madie/qrda-export-service
+    ports:
+      - "4567:80"
+    depends_on:
+      - "qrda-export-mongo"
+    environment:
+      WAIT_HOSTS: qrda-export-mongo:27017
+
+  qrda-export-mongo:
+    image: mongo:6.0
+    restart: always
+    container_name: 'qrda-export-mongo'
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=E5press0
+      - MONGO_INITDB_DATABASE=admin
+    volumes:
+      - ./qrda-data/data:/data/db
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
