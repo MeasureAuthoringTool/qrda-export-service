@@ -14,9 +14,7 @@ puts "Loading QRDA Export Service"
 # Mongoid.load!("config/mongoid.yml")
 Mongoid.configure do |config|
   config.clients.default = {
-    hosts: ['host.docker.internal:27017'],
-    # hosts: ['localhost:27017'],
-    database: 'admin',
+    uri: "#{ENV['MONGODB_URI']}"
   }
 end
 
