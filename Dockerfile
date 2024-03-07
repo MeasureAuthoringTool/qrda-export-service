@@ -1,4 +1,4 @@
-FROM phusion/passenger-ruby32:3.0.2
+FROM phusion/passenger-ruby32:latest
 ENV HOME /root
 
 CMD ["/sbin/my_init"]
