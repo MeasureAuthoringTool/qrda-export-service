@@ -1,7 +1,7 @@
 GIT
   remote: https://github.com/projecttacoma/cqm-models
-  revision: 95a2129f27057cb1df1d378f9ffca3714b8a1088
-  branch: rails_7_mongoid_8
+  revision: b8fd3ef0b197ee4a31371f409993fef3e26d85ad
+  branch: master
   specs:
     cqm-models (4.2.0)
 
@@ -47,6 +47,7 @@ GEM
       domain_name (~> 0.5)
     i18n (1.14.1)
       concurrent-ruby (~> 1.0)
+    json (2.7.1)
     jwt (2.8.1)
       base64
     log4r (1.1.10)
@@ -121,6 +122,7 @@ PLATFORMS
 DEPENDENCIES
   cqm-models!
   cqm-reports (= 4.1.0)
+  json
   jwt
   passenger
   rack-contrib (~> 2.4)
