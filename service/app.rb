@@ -22,6 +22,13 @@ end
 
 use Rack::JSONBodyParser
 
+SCORING = {
+  "Proportion" => "PROPORTION",
+  "Ratio" => "RATIO",
+  "Cohort" => "COHORT",
+  "Continuous Variable" => "CONTINUOUS_VARIABLE"
+}
+
 # Implementation pre-reqs
 # 1. Parsing JSON input ✅
 # 2. Porting over html generation from bonnie
@@ -40,15 +47,17 @@ use Rack::JSONBodyParser
 # 6. Clean up require statements
 # 7. Clean up \class name
 # 8. README, including how to run locally instructions
+# 9. Log formatting
 
 put "/api/qrda" do
   content_type 'text/xml'
-  start_time = DateTime.parse(request.params["measure"]["measurementPeriodStart"])
-  end_time = DateTime.parse(request.params["measure"]["measurementPeriodEnd"])
-  options = { start_time: start_time, end_time: end_time }
 
-  measure = request.params["measure"]
+  measure = request.params
   test_cases = measure["testCases"]
+
+  start_time = DateTime.parse(measure["measurementPeriodStart"])
+  end_time = DateTime.parse(measure["measurementPeriodEnd"])
+  options = { start_time: start_time, end_time: end_time }
 
   qrdas = Array.new
   test_cases.each do | test_case |
@@ -59,7 +68,8 @@ put "/api/qrda" do
     patient.qdmPatient = qdm_patient
     patient[:givenNames] = [test_case["title"]]
 
-    qrdas.push Qrda1R5.new(patient, [measure], options).render
+    # TODO Map MADiE Measure to CQM::Measure
+    qrdas.push Qrda1R5.new(patient, [map_madie_to_cqm_measure(measure)], options).render
   end
   qrdas
 end
@@ -67,4 +77,18 @@ end
 get "/api/health" do
   puts "QRDA Export Service is up"
   "QRDA Export Service is up"
+end
+
+def map_madie_to_cqm_measure(madie_measure)
+  msr = CQM::Measure.new
+  msr.description = madie_measure["measureName"]
+  msr.title = madie_measure["measureName"]
+  msr.hqmf_id = madie_measure["id"] #maybe?
+  msr.hqmf_set_id = madie_measure["measureSetId"] #maybe?
+  msr.hqmf_version_number = madie_measure["version"]
+  msr.cms_id = madie_measure["cmsId"] unless madie_measure["cmsId"].nil?
+  msr.measure_scoring = SCORING[madie_measure["scoring"]]
+
+  #TODO map population criteria
+  msr
 end
