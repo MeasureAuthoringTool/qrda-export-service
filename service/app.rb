@@ -22,6 +22,13 @@ end
 
 use Rack::JSONBodyParser
 
+SCORING = {
+  "Proportion" => "PROPORTION",
+  "Ratio" => "RATIO",
+  "Cohort" => "COHORT",
+  "Continuous Variable" => "CONTINUOUS_VARIABLE"
+}
+
 # Implementation pre-reqs
 # 1. Parsing JSON input ✅
 # 2. Porting over html generation from bonnie
@@ -40,15 +47,17 @@ use Rack::JSONBodyParser
 # 6. Clean up require statements
 # 7. Clean up \class name
 # 8. README, including how to run locally instructions
+# 9. Log formatting
 
 put "/api/qrda" do
-  content_type 'text/xml'
-  start_time = DateTime.parse(request.params["measure"]["measurementPeriodStart"])
-  end_time = DateTime.parse(request.params["measure"]["measurementPeriodEnd"])
-  options = { start_time: start_time, end_time: end_time }
+  content_type 'application/xml '
 
-  measure = request.params["measure"]
-  test_cases = measure["testCases"]
+  #TODO probably don't need access token here, will remove after SME confirmation
+  access_token = request.env["HTTP_Authorization"]
+  measureDTO = request.params
+
+  measure = CQM::Measure.new(JSON.parse(measureDTO["measure"]))
+  test_cases = measureDTO["testCases"]
 
   qrdas = Array.new
   test_cases.each do | test_case |
@@ -58,8 +67,9 @@ put "/api/qrda" do
     patient = CQM::Patient.new
     patient.qdmPatient = qdm_patient
     patient[:givenNames] = [test_case["title"]]
+    #TODO look for more patient fields
 
-    qrdas.push Qrda1R5.new(patient, [measure], options).render
+    qrdas.push Qrda1R5.new(patient, measure, measureDTO["options"].symbolize_keys).render
   end
   qrdas
 end
