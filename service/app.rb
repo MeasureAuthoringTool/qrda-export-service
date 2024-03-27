@@ -50,14 +50,14 @@ SCORING = {
 # 9. Log formatting
 
 put "/api/qrda" do
-  content_type 'text/xml'
+  content_type 'application/xml '
 
-  measure = request.params
-  test_cases = measure["testCases"]
+  #TODO probably don't need access token here, will remove after SME confirmation
+  access_token = request.env["HTTP_Authorization"]
+  measureDTO = request.params
 
-  start_time = DateTime.parse(measure["measurementPeriodStart"])
-  end_time = DateTime.parse(measure["measurementPeriodEnd"])
-  options = { start_time: start_time, end_time: end_time }
+  measure = CQM::Measure.new(JSON.parse(measureDTO["measure"]))
+  test_cases = measureDTO["testCases"]
 
   qrdas = Array.new
   test_cases.each do | test_case |
@@ -67,9 +67,9 @@ put "/api/qrda" do
     patient = CQM::Patient.new
     patient.qdmPatient = qdm_patient
     patient[:givenNames] = [test_case["title"]]
+    #TODO look for more patient fields
 
-    # TODO Map MADiE Measure to CQM::Measure
-    qrdas.push Qrda1R5.new(patient, [map_madie_to_cqm_measure(measure)], options).render
+    qrdas.push Qrda1R5.new(patient, measure, measureDTO["options"].symbolize_keys).render
   end
   qrdas
 end
@@ -77,18 +77,4 @@ end
 get "/api/health" do
   puts "QRDA Export Service is up"
   "QRDA Export Service is up"
-end
-
-def map_madie_to_cqm_measure(madie_measure)
-  msr = CQM::Measure.new
-  msr.description = madie_measure["measureName"]
-  msr.title = madie_measure["measureName"]
-  msr.hqmf_id = madie_measure["id"] #maybe?
-  msr.hqmf_set_id = madie_measure["measureSetId"] #maybe?
-  msr.hqmf_version_number = madie_measure["version"]
-  msr.cms_id = madie_measure["cmsId"] unless madie_measure["cmsId"].nil?
-  msr.measure_scoring = SCORING[madie_measure["scoring"]]
-
-  #TODO map population criteria
-  msr
 end
