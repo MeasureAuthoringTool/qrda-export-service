@@ -67,6 +67,15 @@ put "/api/qrda" do
     patient = CQM::Patient.new
     patient.qdmPatient = qdm_patient
     patient[:givenNames] = [test_case["title"]]
+    patient[:familyName] = [test_case["series"]]
+
+    expectedValues = Array.new
+    test_case["groupPopulations"].each do | groupPopulation |
+      groupPopulation["populationValues"].each do | populationValue |
+        expectedValues.push(populationValue["expected"])
+      end
+    end
+    patient[:expectedValues] = expectedValues
     #TODO look for more patient fields
 
     qrdas.push Qrda1R5.new(patient, measure, measureDTO["options"].symbolize_keys).render
