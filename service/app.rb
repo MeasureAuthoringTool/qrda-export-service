@@ -31,9 +31,9 @@ SCORING = {
 
 # Implementation pre-reqs
 # 1. Parsing JSON input ✅
-# 2. Porting over html generation from bonnie
+# 2. Porting over html generation from bonnie ✅
 # 3. JWT verification
-# 4. Data requirements: what inputs do we need and where do we get that data from?
+# 4. Data requirements: ✅ what inputs do we need and where do we get that data from?
 #     Looks like we'll only need the madie Measure object. It contains the array of test cases
 #     and each testcase already contains an instance of QDM::Patient
 
@@ -52,11 +52,13 @@ SCORING = {
 put "/api/qrda" do
   content_type 'application/xml '
 
-  measureDTO = request.params
+  #TODO probably don't need access token here, will remove after SME confirmation
+  access_token = request.env["HTTP_Authorization"]
+  measure_dto = request.params
 
-  measure = CQM::Measure.new(JSON.parse(measureDTO["measure"]))
-  test_cases = measureDTO["testCases"]
-  source_data_criteria = measureDTO["sourceDataCriteria"]
+  measure = CQM::Measure.new(JSON.parse(measure_dto["measure"]))
+  test_cases = measure_dto["testCases"]
+  source_data_criteria = measure_dto["sourceDataCriteria"]
 
   data_criteria = Array.new
   source_data_criteria.each do | criteria |
@@ -65,33 +67,57 @@ put "/api/qrda" do
 
   measure.source_data_criteria = data_criteria
 
+  qrda_errors = {}
+  html_errors = {}
   qrdas = Array.new
-  test_cases.each do | test_case |
+  htmls = Array.new
+  patients = Array.new
+  results = {qrda: qrdas, html: htmls}
 
+  test_cases.each do | test_case |
     qdm_patient = QDM::Patient.new(JSON.parse(test_case["json"]))
 
     patient = CQM::Patient.new
     patient.qdmPatient = qdm_patient
     patient[:givenNames] = [test_case["title"]]
     patient[:familyName] = [test_case["series"]]
+    patients.push patient # For the summary HTML
 
-    expectedValues = Array.new
+    expected_values = Array.new
     test_case["groupPopulations"].each do | groupPopulation |
       groupPopulation["populationValues"].each do | populationValue |
-        expectedValues.push(populationValue["expected"])
+        expected_values.push(populationValue["expected"])
       end
     end
-    patient[:expectedValues] = expectedValues
+    patient[:expectedValues] = expected_values
 
     if patient.qdmPatient.get_data_elements('patient_characteristic', 'payer').empty?
       payer_codes = [{ 'code' => '1', 'system' => '2.16.840.1.113883.3.221.5', 'codeSystem' => 'SOP' }]
       patient.qdmPatient.dataElements.push QDM::PatientCharacteristicPayer.new(dataElementCodes: payer_codes, relevantPeriod: QDM::Interval.new(patient.qdmPatient.birthDatetime, nil))
     end
+
+    # generate QRDA
+    begin
+      qrda = Qrda1R5.new(patient, measure, measure_dto["options"].symbolize_keys).render
+      qrdas.push qrda
+      results[]
+    rescue Exception => e
+      qrda_errors[patient.id] = e
+    end
+
     #TODO look for more patient fields
 
-    qrdas.push Qrda1R5.new(patient, measure, measureDTO["options"].symbolize_keys).render
+    # attach the HTML export, or the error
+    begin
+      html = QdmPatient.new(patient, true).render
+      htmls.push html
+    rescue Exception => e
+      html_errors[patient.id] = e
+    end
   end
-  qrdas
+  # TODO in MAT-6835
+  # measure_patients_summary(patients, nil, qrda_errors, html_errors, measure)
+  results.to_json
 end
 
 get "/api/health" do
@@ -103,8 +129,7 @@ def build_source_data_criteria(source_data_criteria)
   data_criteria = instantiate_model(source_data_criteria["type"])
   data_criteria.codeListId = source_data_criteria["oid"]
   data_criteria.description = source_data_criteria["description"]
-
-  return data_criteria
+  data_criteria
 end
 
 def instantiate_model(model_name)
@@ -228,4 +253,15 @@ def instantiate_model(model_name)
   else
     raise "Unsupported data type: #{model_name}"
   end
+end
+
+def measure_patients_summary(patients, results, qrda_errors, html_errors, measure)
+  render_to_string partial: "index.html.erb",
+                   locals: {
+                     measure: measure,
+                     results: results,
+                     records: patients,
+                     html_errors: html_errors,
+                     qrda_errors: qrda_errors
+                   }
 end
