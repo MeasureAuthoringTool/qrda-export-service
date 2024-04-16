@@ -10,15 +10,7 @@ require 'jwt'
 
 puts "Loading QRDA Export Service"
 
-# TODO move config to mongoid.yml file.
-# Mongoid.load!("config/mongoid.yml")
-Mongoid.configure do |config|
-  config.clients.default = {
-    hosts: ['host.docker.internal:27017'],
-    # hosts: ['localhost:27017'],
-    database: 'admin',
-  }
-end
+Mongoid.load!("config/mongoid.yml")
 
 use Rack::JSONBodyParser
 
