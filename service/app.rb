@@ -50,7 +50,7 @@ SCORING = {
 # 9. Log formatting
 
 put "/api/qrda" do
-  content_type 'application/xml '
+  content_type 'application/xml'
 
   #TODO probably don't need access token here, will remove after SME confirmation
   access_token = request.env["HTTP_Authorization"]
@@ -129,7 +129,8 @@ def build_source_data_criteria(source_data_criteria)
   data_criteria = instantiate_model(source_data_criteria["type"])
   data_criteria.codeListId = source_data_criteria["oid"]
   data_criteria.description = source_data_criteria["description"]
-  data_criteria
+
+  return data_criteria
 end
 
 def instantiate_model(model_name)
