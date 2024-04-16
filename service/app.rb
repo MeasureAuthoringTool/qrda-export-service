@@ -23,9 +23,9 @@ SCORING = {
 
 # Implementation pre-reqs
 # 1. Parsing JSON input ✅
-# 2. Porting over html generation from bonnie
+# 2. Porting over html generation from bonnie ✅
 # 3. JWT verification
-# 4. Data requirements: what inputs do we need and where do we get that data from?
+# 4. Data requirements: ✅ what inputs do we need and where do we get that data from?
 #     Looks like we'll only need the madie Measure object. It contains the array of test cases
 #     and each testcase already contains an instance of QDM::Patient
 
@@ -33,7 +33,7 @@ SCORING = {
 # 0. github repo ✅
 # 1. Bundler setup ✅
 # 2. Mongoid config ✅
-# 3. Unit testing scaffolding
+# 3. Unit testing scaffolding ✅
 # 4. RDoc scaffolding
 # 5. Containerization ✅
 # 6. Clean up require statements
