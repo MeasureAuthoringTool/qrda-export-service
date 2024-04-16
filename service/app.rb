@@ -61,10 +61,8 @@ put "/api/qrda" do
 
   qrda_errors = {}
   html_errors = {}
-  qrdas = Array.new
-  htmls = Array.new
   patients = Array.new
-  results = {qrda: qrdas, html: htmls}
+  results = Array.new
 
   test_cases.each do | test_case |
     qdm_patient = QDM::Patient.new(JSON.parse(test_case["json"]))
@@ -91,21 +89,17 @@ put "/api/qrda" do
     # generate QRDA
     begin
       qrda = Qrda1R5.new(patient, measure, measure_dto["options"].symbolize_keys).render
-      qrdas.push qrda
-      results[]
     rescue Exception => e
       qrda_errors[patient.id] = e
     end
 
-    #TODO look for more patient fields
-
     # attach the HTML export, or the error
     begin
-      html = QdmPatient.new(patient, true).render
-      htmls.push html
+      report = QdmPatient.new(patient, true).render
     rescue Exception => e
       html_errors[patient.id] = e
     end
+    results.push << {qrda:, report:}
   end
   # TODO MAT-6835: measure_patients_summary(patients, nil, qrda_errors, html_errors, measure)
   results.to_json
