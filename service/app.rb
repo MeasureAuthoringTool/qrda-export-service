@@ -64,13 +64,13 @@ put "/api/qrda" do
   patients = Array.new
   results = Array.new
 
-  test_cases.each do | test_case |
+  test_cases.each_with_index do | test_case, idx |
     qdm_patient = QDM::Patient.new(JSON.parse(test_case["json"]))
 
     patient = CQM::Patient.new
     patient.qdmPatient = qdm_patient
-    patient[:givenNames] = [test_case["title"]]
-    patient[:familyName] = [test_case["series"]]
+    patient[:givenNames] = [ test_case["title"] ]
+    patient[:familyName] = test_case["series"]
     patients.push patient # For the summary HTML
 
     expected_values = Array.new
@@ -86,6 +86,8 @@ put "/api/qrda" do
       patient.qdmPatient.dataElements.push QDM::PatientCharacteristicPayer.new(dataElementCodes: payer_codes, relevantPeriod: QDM::Interval.new(patient.qdmPatient.birthDatetime, nil))
     end
 
+    filename = "#{idx+1}_#{patient[:familyName]}_#{patient[:givenNames][0]}"
+
     # generate QRDA
     begin
       qrda = Qrda1R5.new(patient, measure, measure_dto["options"].symbolize_keys).render
@@ -99,7 +101,7 @@ put "/api/qrda" do
     rescue Exception => e
       html_errors[patient.id] = e
     end
-    results.push << {qrda:, report:}
+    results.push << {filename:, qrda:, report:}
   end
   # TODO MAT-6835: measure_patients_summary(patients, nil, qrda_errors, html_errors, measure)
   results.to_json
