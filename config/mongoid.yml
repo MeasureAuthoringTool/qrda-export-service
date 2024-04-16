@@ -1,0 +1,21 @@
+development:
+  clients:
+    default:
+      database: admin
+      hosts:
+        - host.docker.internal:27017
+
+dev:
+  clients:
+    default:
+      uri: "mongodb+srv://<%=ENV['MONGO_DBUSER']%>:<%=ENV['MONGO_DBPASS']%>@<%=ENV['MONGO_HOST']%>/<%=ENV['MONGO_DATABASE']%><%=ENV['MONGO_OPTIONS']%>"
+
+test:
+  clients:
+    default:
+      uri: "mongodb+srv://<%=ENV['MONGO_DBUSER']%>:<%=ENV['MONGO_DBPASS']%>@<%=ENV['MONGO_HOST']%>/<%=ENV['MONGO_DATABASE']%><%=ENV['MONGO_OPTIONS']%>"
+
+production:
+  clients:
+    default:
+      uri: "mongodb+srv://<%=ENV['MONGO_DBUSER']%>:<%=ENV['MONGO_DBPASS']%>@<%=ENV['MONGO_HOST']%>/<%=ENV['MONGO_DATABASE']%><%=ENV['MONGO_OPTIONS']%>"
