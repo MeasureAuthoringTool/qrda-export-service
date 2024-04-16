@@ -44,11 +44,13 @@ SCORING = {
 put "/api/qrda" do
   content_type 'application/xml'
 
-  measureDTO = request.params
+  #TODO probably don't need access token here, will remove after SME confirmation
+  access_token = request.env["HTTP_Authorization"]
+  measure_dto = request.params
 
-  measure = CQM::Measure.new(JSON.parse(measureDTO["measure"]))
-  test_cases = measureDTO["testCases"]
-  source_data_criteria = measureDTO["sourceDataCriteria"]
+  measure = CQM::Measure.new(JSON.parse(measure_dto["measure"]))
+  test_cases = measure_dto["testCases"]
+  source_data_criteria = measure_dto["sourceDataCriteria"]
 
   data_criteria = Array.new
   source_data_criteria.each do | criteria |
@@ -66,13 +68,13 @@ put "/api/qrda" do
     patient[:givenNames] = [test_case["title"]]
     patient[:familyName] = [test_case["series"]]
 
-    expectedValues = Array.new
+    expected_values = Array.new
     test_case["groupPopulations"].each do | groupPopulation |
       groupPopulation["populationValues"].each do | populationValue |
-        expectedValues.push(populationValue["expected"])
+        expected_values.push(populationValue["expected"])
       end
     end
-    patient[:expectedValues] = expectedValues
+    patient[:expectedValues] = expected_values
 
     if patient.qdmPatient.get_data_elements('patient_characteristic', 'payer').empty?
       payer_codes = [{ 'code' => '1', 'system' => '2.16.840.1.113883.3.221.5', 'codeSystem' => 'SOP' }]
@@ -80,7 +82,7 @@ put "/api/qrda" do
     end
     #TODO look for more patient fields
 
-    qrdas.push Qrda1R5.new(patient, measure, measureDTO["options"].symbolize_keys).render
+    qrdas.push Qrda1R5.new(patient, measure, measure_dto["options"].symbolize_keys).render
   end
   qrdas
 end
