@@ -42,7 +42,7 @@ SCORING = {
 # 9. Log formatting
 
 put "/api/qrda" do
-  content_type 'application/xml'
+  content_type 'application/json'
 
   #TODO probably don't need access token here, will remove after SME confirmation
   access_token = request.env["HTTP_Authorization"]
@@ -59,7 +59,13 @@ put "/api/qrda" do
 
   measure.source_data_criteria = data_criteria
 
+  qrda_errors = {}
+  html_errors = {}
   qrdas = Array.new
+  htmls = Array.new
+  patients = Array.new
+  results = {qrda: qrdas, html: htmls}
+
   test_cases.each do | test_case |
     qdm_patient = QDM::Patient.new(JSON.parse(test_case["json"]))
 
@@ -67,6 +73,7 @@ put "/api/qrda" do
     patient.qdmPatient = qdm_patient
     patient[:givenNames] = [test_case["title"]]
     patient[:familyName] = [test_case["series"]]
+    patients.push patient # For the summary HTML
 
     expected_values = Array.new
     test_case["groupPopulations"].each do | groupPopulation |
@@ -80,11 +87,28 @@ put "/api/qrda" do
       payer_codes = [{ 'code' => '1', 'system' => '2.16.840.1.113883.3.221.5', 'codeSystem' => 'SOP' }]
       patient.qdmPatient.dataElements.push QDM::PatientCharacteristicPayer.new(dataElementCodes: payer_codes, relevantPeriod: QDM::Interval.new(patient.qdmPatient.birthDatetime, nil))
     end
+
+    # generate QRDA
+    begin
+      qrda = Qrda1R5.new(patient, measure, measure_dto["options"].symbolize_keys).render
+      qrdas.push qrda
+      results[]
+    rescue Exception => e
+      qrda_errors[patient.id] = e
+    end
+
     #TODO look for more patient fields
 
-    qrdas.push Qrda1R5.new(patient, measure, measure_dto["options"].symbolize_keys).render
+    # attach the HTML export, or the error
+    begin
+      html = QdmPatient.new(patient, true).render
+      htmls.push html
+    rescue Exception => e
+      html_errors[patient.id] = e
+    end
   end
   qrdas
+  results.to_json
 end
 
 get "/api/health" do
@@ -220,4 +244,15 @@ def instantiate_model(model_name)
   else
     raise "Unsupported data type: #{model_name}"
   end
+end
+
+def measure_patients_summary(patients, results, qrda_errors, html_errors, measure)
+  render_to_string partial: "index.html.erb",
+                   locals: {
+                     measure: measure,
+                     results: results,
+                     records: patients,
+                     html_errors: html_errors,
+                     qrda_errors: qrda_errors
+                   }
 end
