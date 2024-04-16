@@ -41,7 +41,7 @@ SCORING = {
 # 0. github repo ✅
 # 1. Bundler setup ✅
 # 2. Mongoid config ✅
-# 3. Unit testing scaffolding
+# 3. Unit testing scaffolding ✅
 # 4. RDoc scaffolding
 # 5. Containerization ✅
 # 6. Clean up require statements
@@ -115,8 +115,7 @@ put "/api/qrda" do
       html_errors[patient.id] = e
     end
   end
-  # TODO in MAT-6835
-  # measure_patients_summary(patients, nil, qrda_errors, html_errors, measure)
+  # TODO MAT-6835: measure_patients_summary(patients, nil, qrda_errors, html_errors, measure)
   results.to_json
 end
 
@@ -129,8 +128,7 @@ def build_source_data_criteria(source_data_criteria)
   data_criteria = instantiate_model(source_data_criteria["type"])
   data_criteria.codeListId = source_data_criteria["oid"]
   data_criteria.description = source_data_criteria["description"]
-
-  return data_criteria
+  data_criteria
 end
 
 def instantiate_model(model_name)
