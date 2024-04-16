@@ -107,7 +107,7 @@ put "/api/qrda" do
       html_errors[patient.id] = e
     end
   end
-  qrdas
+  # TODO MAT-6835: measure_patients_summary(patients, nil, qrda_errors, html_errors, measure)
   results.to_json
 end
 
