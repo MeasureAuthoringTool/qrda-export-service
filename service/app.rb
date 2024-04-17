@@ -74,9 +74,11 @@ put "/api/qrda" do
     patients.push patient # For the summary HTML
 
     expected_values = Array.new
-    test_case["groupPopulations"].each do | groupPopulation |
-      groupPopulation["populationValues"].each do | populationValue |
-        expected_values.push(populationValue["expected"])
+    if test_case["groupPopulations"]
+      test_case["groupPopulations"].each do | groupPopulation |
+        groupPopulation["populationValues"].each do | populationValue |
+          expected_values.push(populationValue["expected"])
+        end
       end
     end
     patient[:expectedValues] = expected_values
