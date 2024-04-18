@@ -1,0 +1,96 @@
+<html>
+<head>
+  <style>
+      body {
+          font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+          font-size: 14px;
+          line-height: 1.428571429;
+          color: #333333;
+          background-color: #ffffff;
+          margin: auto;
+          width: 800px;
+      }
+      .logo {
+          font-size: 36px;
+          font-weight: 100;
+          color: #0075C4;
+      }
+      .title {
+          font-size: 24px;
+          color: #888;
+          font-weight: 300;
+      }
+      .summary-card {
+          border: 2px #E2E2E2 solid;
+          padding: 10px;
+      }
+      table {
+          border: none;
+          width: 100%;
+          text-align: left;
+          border-collapse: collapse;
+      }
+      th {
+          background-color: #f2f2f2;
+          padding: 10px;
+      }
+      td {
+          padding-left: 10px;
+      }
+      .percentage {
+          font-size: 36px;
+          font-weight: 100;
+      }
+      .pass {
+          color: #20744c;
+          font-size: 24px;
+          font-weight: bold;
+          text-transform: uppercase;
+      }
+      .fail {
+          color: #782b0d;
+          font-size: 24px;
+          font-weight: bold;
+          text-transform: uppercase;
+      }
+      .test-case-number {
+          font-size: 36px;
+      }
+      .btn {
+          border: 2px solid #0075C4;
+          padding: 6px 12px;
+          color: #0075C4;
+          text-decoration: none;
+          font-size: 14px;
+          font-weight: bold;
+          float: right;
+          margin-bottom: 8px;
+          text-transform: uppercase;
+      }
+      .btn:hover {
+          background-color: #f2f2f2;
+      }
+      div.error {
+          color: #a94442;
+          background-color: #f2dede;
+          border-color: #ebccd1;
+          padding: 15px;
+          margin-bottom: 20px;
+          border: 1px solid transparent;
+          border-radius: 4px;
+      }
+      div.error span.important {
+          font-weight: bold;
+      }
+      div.error span.secondary {
+          color: #888;
+      }
+  </style>
+</head>
+<body>
+<h1><span class="logo">MADiE</span><span class="title">: TEST CASE RESULTS BY MEASURE</span></h1>
+<h1 class="measure-title"><%=measure.cms_id%>: <%=measure.title%></h1>
+
+
+</body>
+</html>

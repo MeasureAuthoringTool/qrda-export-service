@@ -58,11 +58,12 @@ put "/api/qrda" do
   end
 
   measure.source_data_criteria = data_criteria
+  measure.cms_id = measure.cms_id.nil? ? 'CMS0v0' : measure.cms_id
 
   qrda_errors = {}
   html_errors = {}
   patients = Array.new
-  results = Array.new
+  individual_reports = Array.new
 
   test_cases.each_with_index do | test_case, idx |
     qdm_patient = QDM::Patient.new(JSON.parse(test_case["json"]))
@@ -103,10 +104,10 @@ put "/api/qrda" do
     rescue Exception => e
       html_errors[patient.id] = e
     end
-    results.push << {filename:, qrda:, report:}
+    individual_reports.push << {filename:, qrda:, report:}
   end
-  # TODO MAT-6835: measure_patients_summary(patients, nil, qrda_errors, html_errors, measure)
-  results.to_json
+  summary_report = measure_patients_summary(patients, nil, qrda_errors, html_errors, measure)
+  { summaryReport: summary_report,individualReports: individual_reports }.to_json
 end
 
 get "/api/health" do
@@ -245,12 +246,11 @@ def instantiate_model(model_name)
 end
 
 def measure_patients_summary(patients, results, qrda_errors, html_errors, measure)
-  render_to_string partial: "index.html.erb",
-                   locals: {
-                     measure: measure,
-                     results: results,
-                     records: patients,
-                     html_errors: html_errors,
-                     qrda_errors: qrda_errors
-                   }
+  erb "index".to_sym, {}, {
+       measure: measure,
+       results: results,
+       records: patients,
+       html_errors: html_errors,
+       qrda_errors: qrda_errors
+     }
 end
