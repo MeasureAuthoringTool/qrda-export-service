@@ -64,6 +64,7 @@ put "/api/qrda" do
 
   measure.source_data_criteria = data_criteria
   measure.cms_id = measure.cms_id.nil? ? 'CMS0v0' : measure.cms_id
+  measure.hqmf_id = madie_measure["id"]
 
   qrda_errors = {}
   html_errors = {}
