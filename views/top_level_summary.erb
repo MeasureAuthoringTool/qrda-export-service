@@ -1,0 +1,200 @@
+<html>
+<head>
+  <style>
+      body {
+          font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+          font-size: 14px;
+          line-height: 1.428571429;
+          color: #333333;
+          background-color: #ffffff;
+          margin: auto;
+          width: 800px;
+      }
+      .logo {
+          font-size: 36px;
+          font-weight: 100;
+          color: #0075C4;
+      }
+      .title {
+          font-size: 24px;
+          color: #888;
+          font-weight: 300;
+      }
+      .summary-card {
+          border: 2px #E2E2E2 solid;
+          padding: 10px;
+      }
+      table {
+          border: none;
+          width: 100%;
+          text-align: left;
+          border-collapse: collapse;
+      }
+      th {
+          background-color: #f2f2f2;
+          padding: 10px;
+      }
+      td {
+          padding-left: 10px;
+      }
+      .percentage {
+          font-size: 36px;
+          font-weight: 100;
+      }
+      .pass {
+          color: #20744c;
+          font-size: 24px;
+          font-weight: bold;
+          text-transform: uppercase;
+      }
+      .fail {
+          color: #782b0d;
+          font-size: 24px;
+          font-weight: bold;
+          text-transform: uppercase;
+      }
+      .test-case-number {
+          font-size: 36px;
+      }
+      .btn {
+          border: 2px solid #0075C4;
+          padding: 6px 12px;
+          color: #0075C4;
+          text-decoration: none;
+          font-size: 14px;
+          font-weight: bold;
+          float: right;
+          margin-bottom: 8px;
+          text-transform: uppercase;
+      }
+      .btn:hover {
+          background-color: #f2f2f2;
+      }
+      div.error {
+          color: #a94442;
+          background-color: #f2dede;
+          border-color: #ebccd1;
+          padding: 15px;
+          margin-bottom: 20px;
+          border: 1px solid transparent;
+          border-radius: 4px;
+      }
+      div.error span.important {
+          font-weight: bold;
+      }
+      div.error span.secondary {
+          color: #888;
+      }
+  </style>
+</head>
+<body>
+<h1><span class="logo">MADiE</span><span class="title">: TEST CASE RESULTS BY MEASURE</span></h1>
+<h1 class="measure-title"><%=measure.cms_id%>: <%=measure.title%></h1>
+
+<% population_crit_results.each_with_index do |pop_crit, pop_crit_idx| %>
+
+  <div class="summary-card">
+    <% if population_crit_results.length > 1%>
+      <h2>Population: <%= pop_crit["groupNumber"] %></h2>
+    <% end %>
+    <table>
+      <tbody>
+      <tr>
+        <th>RESULT</th>
+        <th>CATEGORY</th>
+      </tr>
+      <tr>
+        <%
+          result = pop_crit["testCaseExecutionResults"].find { |result| result["populations"].find {| pop | pop["pass"] == false} } ? 'fail' : 'pass'
+        %>
+        <td class="<%= result %>"><%= result %></td>
+        <%# passed_count = 0 %>
+        <%# pop_crit["testCaseExecutionResults"].each do |test_case| %>
+        <%#  passed_count += 1 unless test_case["populations"].find { |pop| pop["pass"] == false} %>
+        <%# end %>
+        <%# total = pop_crit[:pass_fail_ratio].split('/')[1] %>
+        <td><span class="test-case-number"><%= nil %></span>/<%= pop_crit["testCaseExecutionResults"].length %></td>
+      </tr>
+      <tr>
+        <td class="percentage"><%= nil %>%</td>
+        <td>Passing</td>
+      </tr>
+      <tr>
+        <td class="percentage"><%= nil %>%</td>
+        <td>Coverage</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+  <br>
+  <% pop_crit["testCaseExecutionResults"].each_with_index do |patient_summary, index| %>
+    <%# patient_result = result[1]['differences'].values.select{|difference| difference['medicalRecordNumber'] == record.qdmPatient.id.to_s}.first %>
+    <br>
+    <table>
+      <tr>
+        <td>
+          <h2>
+            <% result = patient_summary["populations"].find {|pop| pop["pass"] == false}.nil? ? 'pass' : 'fail' %>
+            <span class="<%= result %>"><%= result %>: </span>
+            <% unless html_errors[patient_summary["testCaseId"]] %>
+              <a href="<%= File.join(".","html","#{index+1}_#{patient_summary["last"]}_#{patient_summary["first"]}.html")%>"><%=patient_summary["last"]%>, <%=patient_summary["first"]%></a>
+            <% else %>
+              <%=patient_summary[:family_name]%>, <%=patient_summary[:given_name]%>
+            <% end %>
+            <% unless qrda_errors[patient_summary[:id]] %>
+              <a class="btn" href="<%= File.join(".","qrda","#{index+1}_#{patient_summary["last"]}_#{patient_summary["first"]}.xml")%>">qrda</a>
+            <% end %>
+          </h2>
+        </td>
+      </tr>
+    </table>
+    <% if qrda_errors[patient_summary[:id]] %>
+      <div class="error">
+        <span class="important">There was an error exporting the QRDA for this Test Case:</span>
+        <% data_criteria = qrda_errors[patient_summary[:id]].data_criteria rescue nil %>
+        <% if data_criteria %>
+          <span class="important">could not generate appropriate QRDA content for <%= data_criteria.description %></span>
+          <span class="secondary">(<%= qrda_errors[patient_summary[:id]].message %>)</span>
+        <% else %>
+          <%= qrda_errors[patient_summary[:id]].message %>
+        <% end %>
+      </div>
+    <% end %>
+    <% if html_errors[patient_summary[:id]] %>
+      <div class="error">
+        <span class="important">There was an error exporting the HTML for this Test Case:</span>
+        <% data_criteria = html_errors[patient_summary[:id]].data_criteria rescue nil %>
+        <% if data_criteria %>
+          <span class="important">could not generate appropriate HTML content for <%= data_criteria.description %></span>
+          <span class="secondary">(<%= html_errors[patient_summary[:id]].message %>)</span>
+        <% else %>
+          <%= html_errors[patient_summary[:id]].message %>
+        <% end %>
+      </div>
+    <% end %>
+    <table>
+      <tr>
+        <th>Status</th>
+        <th>Population</th>
+        <th>Expected</th>
+        <th>Actual</th>
+      </tr>
+      <% patient_summary["populations"].each do |pop| %>
+        <% pop["name"] = 'OBSERV_1' if pop["name"] == 'OBSERV'%>
+        <tr>
+          <% if pop["pass"] %>
+            <td class="pass">&#10003;</td>
+          <% else %>
+            <td class="fail">&times;</td>
+          <% end %>
+          <td><%= population_abbr[pop["name"]] %></td>
+          <td><%= pop["expected"] %><%= pop["unit"] %></td>
+          <td><%= pop["actual"] %><%= pop["unit"] %></td>
+        </tr>
+      <% end %>
+    </table>
+  <% end %>
+  <br><br>
+<% end %>
+</body>
+</html>

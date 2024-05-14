@@ -1,11 +1,11 @@
 # frozen_string_literal: true
-require "bundler/setup"
-require "sinatra"
-require "cqm-reports"
-require "cqm/models"
+require 'bundler/setup'
+require 'sinatra'
+require 'cqm-reports'
+require 'cqm/models'
 require 'rest-client'
-require "rack"
-require "rack/contrib"
+require 'rack'
+require 'rack/contrib' # Includes the JSONBodyParser middleware
 require 'jwt'
 
 puts "Loading QRDA Export Service"
@@ -26,11 +26,18 @@ Mongoid.load!("config/mongoid.yml")
 
 use Rack::JSONBodyParser
 
-SCORING = {
-  "Proportion" => "PROPORTION",
-  "Ratio" => "RATIO",
-  "Cohort" => "COHORT",
-  "Continuous Variable" => "CONTINUOUS_VARIABLE"
+POPULATION_ABBR = {
+  "initialPopulation" => "IPP",
+  "measurePopulation" => "MSRPOPL",
+  "measurePopulationExclusion" => "MSRPOPLEX",
+  "denominator" => "DENOM",
+  "numerator" => "NUMER",
+  "numeratorExclusion" => "NUMEX",
+  "denominatorException" => "DENEXCEP",
+  "denominatorExclusion" => "DENEX",
+  "stratification" => "STRAT",
+  "measureObservation" => "OBSERV",
+  "measurePopulationObservation" => "OBSERV"
 }
 
 # Implementation pre-reqs
@@ -54,58 +61,36 @@ SCORING = {
 # 9. Log formatting
 
 put "/api/qrda" do
+  # Set return type
   content_type 'application/json'
 
-  #TODO probably don't need access token here, will remove after SME confirmation
+  # TODO probably don't need access token here, will remove after SME confirmation
   access_token = request.env["HTTP_Authorization"]
+
+  # Parse request params
   measure_dto = request.params
 
+  # Prepare CQM Measure
   madie_measure = JSON.parse(measure_dto["measure"])
-  measure = CQM::Measure.new(madie_measure) unless madie_measure.nil?
+  measure = CQM::Measure.new(madie_measure) unless measure_dto["measure"].nil?
   if measure.nil?
     return [400, "Measure is empty."]
   end
-
-  test_cases = measure_dto["testCases"]
-  source_data_criteria = measure_dto["sourceDataCriteria"]
-
-  data_criteria = Array.new
-  source_data_criteria.each do | criteria |
-    data_criteria.push build_source_data_criteria(criteria)
-  end
-
-  measure.source_data_criteria = data_criteria
+  measure.source_data_criteria = build_source_data_criteria(measure_dto["sourceDataCriteria"])
   measure.cms_id = measure.cms_id.nil? ? 'CMS0v0' : measure.cms_id
   measure.hqmf_id = madie_measure["id"]
+
+  test_cases = measure_dto["testCases"]
 
   qrda_errors = {}
   html_errors = {}
   patients = Array.new
-  individual_reports = Array.new
+  generated_reports = Array.new # Array of each Patient's QRDA and HTML summary
 
+  # Generate QRDA XMLs and HTML patient summaries
   test_cases.each_with_index do | test_case, idx |
-    qdm_patient = QDM::Patient.new(JSON.parse(test_case["json"]))
-
-    patient = CQM::Patient.new
-    patient.qdmPatient = qdm_patient
-    patient[:givenNames] = [ test_case["title"] ]
-    patient[:familyName] = test_case["series"]
+    patient = build_cqm_patient(idx, test_case)
     patients.push patient # For the summary HTML
-
-    expected_values = Array.new
-    if test_case["groupPopulations"]
-      test_case["groupPopulations"].each do | groupPopulation |
-        groupPopulation["populationValues"].each do | populationValue |
-          expected_values.push(populationValue["expected"])
-        end
-      end
-    end
-    patient[:expectedValues] = expected_values
-
-    if patient.qdmPatient.get_data_elements('patient_characteristic', 'payer').empty?
-      payer_codes = [{ 'code' => '1', 'system' => '2.16.840.1.113883.3.221.5', 'codeSystem' => 'SOP' }]
-      patient.qdmPatient.dataElements.push QDM::PatientCharacteristicPayer.new(dataElementCodes: payer_codes, relevantPeriod: QDM::Interval.new(patient.qdmPatient.birthDatetime, nil))
-    end
 
     filename = "#{idx+1}_#{patient[:familyName]}_#{patient[:givenNames][0]}"
 
@@ -122,11 +107,28 @@ put "/api/qrda" do
     rescue Exception => e
       html_errors[patient.id] = e
     end
-    individual_reports.push << {filename:, qrda:, report:}
+    generated_reports.push << {filename:, qrda:, report:}
   end
-  summary_report = measure_patients_summary(patients, nil, qrda_errors, html_errors, measure)
-  { summaryReport: summary_report,individualReports: individual_reports }.to_json
+  summary_report = summary_report(patients,
+                                     qrda_errors,
+                                     html_errors,
+                                     measure,
+                                     measure_dto["testCaseDtos"])
+
+  return { summaryReport: summary_report, individualReports: generated_reports }.to_json
 end
+
+def summary_report(patients, qrda_errors, html_errors, measure, population_results)
+  erb "top_level_summary".to_sym, {}, {
+    measure: ,
+    records: patients,
+    html_errors: ,
+    qrda_errors: ,
+    population_crit_results: population_results,
+    population_abbr: POPULATION_ABBR
+  }
+end
+
 
 get "/api/health" do
   puts "QRDA Export Service is up"
@@ -134,10 +136,36 @@ get "/api/health" do
 end
 
 def build_source_data_criteria(source_data_criteria)
-  data_criteria = instantiate_model(source_data_criteria["type"])
-  data_criteria.codeListId = source_data_criteria["oid"]
-  data_criteria.description = source_data_criteria["description"]
+  data_criteria = Array.new
+  source_data_criteria.each do | criteria |
+    data_criteria.push map_source_data_criteria(criteria)
+  end
   data_criteria
+end
+
+def map_source_data_criteria(criteria)
+  data_criteria = instantiate_model(criteria["type"])
+  data_criteria.codeListId = criteria["oid"]
+  data_criteria.description = criteria["description"]
+  data_criteria
+end
+
+def build_cqm_patient(idx, test_case)
+  qdm_patient = QDM::Patient.new(JSON.parse(test_case["json"]))
+
+  patient = CQM::Patient.new
+  patient[:id] = idx
+  patient.qdmPatient = qdm_patient
+  patient[:givenNames] = [test_case["title"]]
+  patient[:familyName] = test_case["series"]
+  patient[:pass] = true
+
+  if patient.qdmPatient.get_data_elements('patient_characteristic', 'payer').empty?
+    payer_codes = [{ 'code' => '1', 'system' => '2.16.840.1.113883.3.221.5', 'codeSystem' => 'SOP' }]
+    patient.qdmPatient.dataElements.push QDM::PatientCharacteristicPayer.new(dataElementCodes: payer_codes,
+                                                                             relevantPeriod: QDM::Interval.new(patient.qdmPatient.birthDatetime, nil))
+  end
+  patient
 end
 
 def instantiate_model(model_name)
@@ -263,12 +291,41 @@ def instantiate_model(model_name)
   end
 end
 
-def measure_patients_summary(patients, results, qrda_errors, html_errors, measure)
-  erb "index".to_sym, {}, {
-       measure: measure,
-       results: results,
-       records: patients,
-       html_errors: html_errors,
-       qrda_errors: qrda_errors
-     }
-end
+# def prepare_patient_summary(idx, patient, test_case)
+#   patient_summary = {
+#     id: idx,
+#     family_name: patient[:familyName],
+#     given_name: patient[:givenNames][0],
+#     pass: true,
+#     group_population_results: Array.new
+#   }
+#
+#   if test_case["groupPopulations"]
+#     test_case["groupPopulations"].each do |groupPopulation|
+#       groupPopulation["populationValues"].each do |populationValue|
+#         # Convert expected/actual values to integers (matches legacy output)
+#         expected = populationValue["expected"] if populationValue["expected"].is_a? Integer
+#         actual = populationValue["actual"] if populationValue["actual"].is_a? Integer
+#
+#         if expected.nil? and [true, false].include? populationValue["expected"]
+#           expected = populationValue["expected"] ? 1 : 0
+#         end
+#
+#         if actual.nil? and [true, false].include? populationValue["actual"]
+#           actual = populationValue["actual"] ? 1 : 0
+#         end
+#
+#         population_results = {
+#           name: POPULATION_ABBR[populationValue["name"]],
+#           expected: expected,
+#           actual: actual,
+#           result: expected == actual ? 'pass' : 'fail', # maps to desired css styling class
+#           unit: ""
+#         }
+#         patient_summary[:pass] = population_results[:result] == 'pass' if patient_summary[:pass]
+#         patient_summary[:group_population_results].push population_results
+#       end
+#     end
+#   end
+#   patient_summary
+# end
