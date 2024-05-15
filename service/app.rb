@@ -48,7 +48,12 @@ put "/api/qrda" do
   access_token = request.env["HTTP_Authorization"]
   measure_dto = request.params
 
-  measure = CQM::Measure.new(JSON.parse(measure_dto["measure"]))
+  madie_measure = JSON.parse(measure_dto["measure"])
+  measure = CQM::Measure.new(madie_measure) unless madie_measure.nil?
+  if measure.nil?
+    return [400, "Measure is empty."]
+  end
+
   test_cases = measure_dto["testCases"]
   source_data_criteria = measure_dto["sourceDataCriteria"]
 
@@ -59,6 +64,7 @@ put "/api/qrda" do
 
   measure.source_data_criteria = data_criteria
   measure.cms_id = measure.cms_id.nil? ? 'CMS0v0' : measure.cms_id
+  measure.hqmf_id = madie_measure["id"]
 
   qrda_errors = {}
   html_errors = {}
