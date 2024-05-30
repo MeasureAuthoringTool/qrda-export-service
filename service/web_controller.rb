@@ -68,7 +68,7 @@ put "/api/qrda" do
   access_token = request.env["HTTP_Authorization"]
 
   # Parse request params
-  measure_dto = request.params
+  measure_dto = request.params # Uses the Rack::JSONBodyParser middleware
 
   # Prepare CQM Measure
   madie_measure = JSON.parse(measure_dto["measure"])
@@ -113,7 +113,7 @@ put "/api/qrda" do
                                      qrda_errors,
                                      html_errors,
                                      measure,
-                                     measure_dto["testCaseDtos"])
+                                     measure_dto["groupDTOs"])
 
   return { summaryReport: summary_report, individualReports: generated_reports }.to_json
 end
@@ -290,42 +290,3 @@ def instantiate_model(model_name)
     raise "Unsupported data type: #{model_name}"
   end
 end
-
-# def prepare_patient_summary(idx, patient, test_case)
-#   patient_summary = {
-#     id: idx,
-#     family_name: patient[:familyName],
-#     given_name: patient[:givenNames][0],
-#     pass: true,
-#     group_population_results: Array.new
-#   }
-#
-#   if test_case["groupPopulations"]
-#     test_case["groupPopulations"].each do |groupPopulation|
-#       groupPopulation["populationValues"].each do |populationValue|
-#         # Convert expected/actual values to integers (matches legacy output)
-#         expected = populationValue["expected"] if populationValue["expected"].is_a? Integer
-#         actual = populationValue["actual"] if populationValue["actual"].is_a? Integer
-#
-#         if expected.nil? and [true, false].include? populationValue["expected"]
-#           expected = populationValue["expected"] ? 1 : 0
-#         end
-#
-#         if actual.nil? and [true, false].include? populationValue["actual"]
-#           actual = populationValue["actual"] ? 1 : 0
-#         end
-#
-#         population_results = {
-#           name: POPULATION_ABBR[populationValue["name"]],
-#           expected: expected,
-#           actual: actual,
-#           result: expected == actual ? 'pass' : 'fail', # maps to desired css styling class
-#           unit: ""
-#         }
-#         patient_summary[:pass] = population_results[:result] == 'pass' if patient_summary[:pass]
-#         patient_summary[:group_population_results].push population_results
-#       end
-#     end
-#   end
-#   patient_summary
-# end
