@@ -79,8 +79,8 @@ GEM
       rack
       rake (>= 0.8.1)
     racc (1.7.3)
-    rack (3.0.9.1)
-    rack-contrib (2.4.0)
+    rack (3.0.11)
+    rack-contrib (2.5.0)
       rack (< 4)
     rack-protection (4.0.0)
       base64 (>= 0.1.0)
@@ -126,7 +126,7 @@ DEPENDENCIES
   jwt
   minitest
   passenger
-  rack-contrib (~> 2.4)
+  rack-contrib (~> 2.5)
   rack-test
   rackup (~> 2.1)
   rest-client
