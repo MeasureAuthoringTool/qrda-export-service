@@ -2,5 +2,5 @@ require 'bundler'
 
 Bundler.require
 
-require './service/app'
+require './service/web_controller'
 run Sinatra::Application
