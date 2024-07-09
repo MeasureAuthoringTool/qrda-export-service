@@ -105,13 +105,13 @@
       </tr>
       <tr>
         <%
-          result = pop_crit["testCaseDTOs"].find { |result| result["populations"].find {| pop | pop["pass"] == false} } ? 'fail' : 'pass'
+          result = pop_crit["testCaseDTOs"].any? { |test_case| pop_fail(test_case) || strat_fail(test_case)} ? 'fail' : 'pass'
         %>
         <td class="<%= result %>"><%= result %></td>
         <% passed_count = 0 %>
         <% total = pop_crit["testCaseDTOs"].length %>
         <% pop_crit["testCaseDTOs"].each do |test_case| %>
-        <%  passed_count += 1 unless test_case["populations"].find { |pop| pop["pass"] == false} %>
+        <%  passed_count+= 1 unless (pop_fail(test_case) || strat_fail(test_case)) %>
         <% end %>
         <td><span class="test-case-number"><%= passed_count %></span>/<%= total %></td>
       </tr>
@@ -127,48 +127,47 @@
     </table>
   </div>
   <br>
-  <% pop_crit["testCaseDTOs"].each_with_index do |patient_summary, index| %>
-    <%# patient_result = result[1]['differences'].values.select{|difference| difference['medicalRecordNumber'] == record.qdmPatient.id.to_s}.first %>
+  <% pop_crit["testCaseDTOs"].each_with_index do |test_case, index| %>
     <br>
     <table>
       <tr>
         <td>
           <h2>
-            <% result = patient_summary["populations"].find {|pop| pop["pass"] == false}.nil? ? 'pass' : 'fail' %>
+            <% result = (!pop_fail(test_case) && !strat_fail(test_case)) ? 'pass' : 'fail' %>
             <span class="<%= result %>"><%= result %>: </span>
-            <% unless html_errors[patient_summary["testCaseId"]] %>
-              <a href="<%= File.join(".","html","#{index+1}_#{patient_summary["lastName"]}_#{patient_summary["firstName"]}.html")%>"><%=patient_summary["lastName"]%>, <%=patient_summary["firstName"]%></a>
+            <% unless html_errors[test_case["testCaseId"]] %>
+              <a href="<%= File.join(".","html","#{index+1}_#{test_case["lastName"]}_#{test_case["firstName"]}.html")%>"><%=test_case["lastName"]%>, <%=test_case["firstName"]%></a>
             <% else %>
-              <%=patient_summary["lastName"]%>, <%=patient_summary["firstName"]%>
+              <%=test_case["lastName"]%>, <%=test_case["firstName"]%>
             <% end %>
-            <% unless qrda_errors[patient_summary["testCaseId"]] %>
-              <a class="btn" href="<%= File.join(".","qrda","#{index+1}_#{patient_summary["lastName"]}_#{patient_summary["firstName"]}.xml")%>">qrda</a>
+            <% unless qrda_errors[test_case["testCaseId"]] %>
+              <a class="btn" href="<%= File.join(".","qrda","#{index+1}_#{test_case["lastName"]}_#{test_case["firstName"]}.xml")%>">qrda</a>
             <% end %>
           </h2>
         </td>
       </tr>
     </table>
-    <% if qrda_errors[patient_summary["testCaseId"]] %>
+    <% if qrda_errors[test_case["testCaseId"]] %>
       <div class="error">
         <span class="important">There was an error exporting the QRDA for this Test Case:</span>
-        <% data_criteria = qrda_errors[patient_summary["testCaseId"]].data_criteria rescue nil %>
+        <% data_criteria = qrda_errors[test_case["testCaseId"]].data_criteria rescue nil %>
         <% if data_criteria %>
           <span class="important">could not generate appropriate QRDA content for <%= data_criteria.description %></span>
-          <span class="secondary">(<%= qrda_errors[patient_summary["testCaseId"]].message %>)</span>
+          <span class="secondary">(<%= qrda_errors[test_case["testCaseId"]].message %>)</span>
         <% else %>
-          <%= qrda_errors[patient_summary["testCaseId"]].message %>
+          <%= qrda_errors[test_case["testCaseId"]].message %>
         <% end %>
       </div>
     <% end %>
-    <% if html_errors[patient_summary["testCaseId"]] %>
+    <% if html_errors[test_case["testCaseId"]] %>
       <div class="error">
         <span class="important">There was an error exporting the HTML for this Test Case:</span>
-        <% data_criteria = html_errors[patient_summary["testCaseId"]].data_criteria rescue nil %>
+        <% data_criteria = html_errors[test_case["testCaseId"]].data_criteria rescue nil %>
         <% if data_criteria %>
           <span class="important">could not generate appropriate HTML content for <%= data_criteria.description %></span>
-          <span class="secondary">(<%= html_errors[patient_summary["testCaseId"]].message %>)</span>
+          <span class="secondary">(<%= html_errors[test_case["testCaseId"]].message %>)</span>
         <% else %>
-          <%= html_errors[patient_summary["testCaseId"]].message %>
+          <%= html_errors[test_case["testCaseId"]].message %>
         <% end %>
       </div>
     <% end %>
@@ -179,7 +178,7 @@
         <th>Expected</th>
         <th>Actual</th>
       </tr>
-      <% patient_summary["populations"].each do |pop| %>
+      <% test_case["populations"].each do |pop| %>
         <% pop["name"] = 'OBSERV_1' if pop["name"] == 'OBSERV'%>
         <tr>
           <% if pop["pass"] %>
@@ -191,6 +190,22 @@
           <td><%= pop["expected"] %><%= pop["unit"] %></td>
           <td><%= pop["actual"] %><%= pop["unit"] %></td>
         </tr>
+      <% end %>
+      <% unless test_case["stratifications"].empty? %>
+        <% test_case["stratifications"].each do |strats| %>
+          <% strats["stratificationDtos"].each do |strat| %>
+            <tr>
+              <% if strat["pass"] %>
+                <td class="pass">&#10003;</td>
+              <% else %>
+                <td class="fail">&times;</td>
+              <% end %>
+              <td><%= population_abbr[strat["name"]].nil? ? strat["name"] : population_abbr[strat["name"]] %></td>
+              <td><%= strat["expected"] %><%= strat["unit"] %></td>
+              <td><%= strat["actual"] %><%= strat["unit"] %></td>
+            </tr>
+          <% end %>
+        <% end %>
       <% end %>
     </table>
   <% end %>
