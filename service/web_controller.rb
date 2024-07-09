@@ -55,8 +55,8 @@ POPULATION_ABBR = {
 # 3. Unit testing scaffolding ✅
 # 4. RDoc scaffolding
 # 5. Containerization ✅
-# 6. Clean up require statements
-# 7. Clean up \class name
+# 6. Clean up require statements ✅
+# 7. Clean up \class name ✅
 # 8. README, including how to run locally instructions
 # 9. Log formatting
 
@@ -118,6 +118,20 @@ put "/api/qrda" do
   return { summaryReport: summary_report, individualReports: generated_reports }.to_json
 end
 
+# Helper methods for rendering the Summary Report
+helpers do
+  def strat_fail(test_case)
+    if test_case["stratifications"].nil?
+      false
+    end
+    test_case["stratifications"].any? { |strats| strats["stratificationDtos"].find { |strat| strat["pass"] == false }}
+  end
+
+  def pop_fail(test_case)
+    test_case["populations"].any? { |pop| pop["pass"] == false }
+  end
+end
+
 def summary_report(patients, qrda_errors, html_errors, measure, population_results)
   erb "top_level_summary".to_sym, {}, {
     measure: ,
@@ -128,7 +142,6 @@ def summary_report(patients, qrda_errors, html_errors, measure, population_resul
     population_abbr: POPULATION_ABBR
   }
 end
-
 
 get "/api/health" do
   puts "QRDA Export Service is up"
@@ -253,7 +266,7 @@ def instantiate_model(model_name)
   when "PhysicalExamRecommended"
     return QDM::PhysicalExamRecommended.new
   when "PatientCharacteristicBirthdate"
-    return PatientCharacteristicBirthdate.new
+    return QDM::PatientCharacteristicBirthdate.new
   when "AdverseEvent"
     return QDM::AdverseEvent.new
   when "DeviceRecommended"
