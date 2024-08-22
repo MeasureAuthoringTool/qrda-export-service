@@ -3,7 +3,7 @@ source "https://rubygems.org"
 gem 'sinatra'
 gem 'passenger'
 gem 'rest-client'
-gem 'cqm-reports', '4.1.1'
+gem 'cqm-reports', '4.1.2'
 gem 'rackup', '~> 2.1'
 gem 'rack-contrib', '~> 2.5', '>= 2.5.0'
 gem 'jwt'
