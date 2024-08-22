@@ -71,7 +71,10 @@ put "/api/qrda" do
   measure_dto = request.params # Uses the Rack::JSONBodyParser middleware
 
   # Prepare CQM Measure
-  madie_measure = JSON.parse(measure_dto["measure"],max_nesting: 512)
+  if measure_dto["measure"].nil?
+    return [400, "Measure is empty."]
+  end
+  madie_measure = JSON.parse(measure_dto["measure"], max_nesting: 512)
   measure = CQM::Measure.new(madie_measure) unless measure_dto["measure"].nil?
   if measure.nil?
     return [400, "Measure is empty."]
