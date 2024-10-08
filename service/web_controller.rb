@@ -7,6 +7,7 @@ require 'rest-client'
 require 'rack'
 require 'rack/contrib' # Includes the JSONBodyParser middleware
 require 'jwt'
+require 'newrelic_rpm'
 
 puts "Loading QRDA Export Service"
 
