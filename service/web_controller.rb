@@ -7,8 +7,11 @@ require 'rest-client'
 require 'rack'
 require 'rack/contrib' # Includes the JSONBodyParser middleware
 require 'jwt'
+require 'logger'
 
 puts "Loading QRDA Export Service"
+
+logger = Logger.new(STDOUT)
 
 # Override the as_json method to ensure the _id is displayed as
 # just the _id value as a string in the QRDA XML, "<_id>".
@@ -101,6 +104,8 @@ put "/api/qrda" do
     begin
       qrda = Qrda1R5.new(patient, measure, measure_dto["options"].symbolize_keys).render
     rescue Exception => e
+      logger.error("An error occurred generating QRDA for measure [#{madie_measure["id"]}] test case ID [#{test_case["id"]}]: #{e.message}")
+      logger.error(e.backtrace.join("\n"))
       qrda_errors[patient.id] = e
     end
 
