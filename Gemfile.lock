@@ -1,9 +1,9 @@
 GIT
   remote: https://github.com/projecttacoma/cqm-models
-  revision: b8fd3ef0b197ee4a31371f409993fef3e26d85ad
+  revision: f2aae8b0643111fa8cc8309b7788d6fea13d6d1d
   branch: master
   specs:
-    cqm-models (4.2.0)
+    cqm-models (4.2.5)
 
 GEM
   remote: https://rubygems.org/
@@ -140,4 +140,4 @@ DEPENDENCIES
   sinatra (>= 4.1.0)
 
 BUNDLED WITH
-   2.4.20
+   2.6.9
