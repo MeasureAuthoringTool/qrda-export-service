@@ -78,7 +78,9 @@ put "/api/qrda" do
     return [400, "Measure is empty."]
   end
   madie_measure = JSON.parse(measure_dto["measure"], max_nesting: 512)
-  measure = CQM::Measure.new(madie_measure) unless measure_dto["measure"].nil?
+  # TODO: update cqm-models. QUICKFIX: ignore the calculate_ravs property since it's not required
+  measure_without_ravs = madie_measure.reject { |k, _| k == "calculate_ravs" }
+  measure = CQM::Measure.new(measure_without_ravs) unless measure_dto["measure"].nil?
   if measure.nil?
     return [400, "Measure is empty."]
   end
