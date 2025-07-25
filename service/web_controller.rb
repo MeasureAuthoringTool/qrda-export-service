@@ -60,7 +60,7 @@ POPULATION_ABBR = {
 # 5. Containerization ✅
 # 6. Clean up require statements ✅
 # 7. Clean up \class name ✅
-# 8. README, including how to run locally instructions
+# 8. README, including how to run local instructions
 # 9. Log formatting
 
 put "/api/qrda" do
