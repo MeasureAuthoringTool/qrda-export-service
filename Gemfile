@@ -1,8 +1,8 @@
 source "https://rubygems.org"
 
-gem 'sinatra', '>= 4.1.0'
+gem 'sinatra', '>= 4.2.0'
 gem 'puma'
-gem 'passenger'
+gem 'passenger', '>= 6.1.0'
 gem 'rest-client'
 gem 'cqm-reports', '4.1.3'
 gem 'rackup', '~> 2.2', '>= 2.2.0'
