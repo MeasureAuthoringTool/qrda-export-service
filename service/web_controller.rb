@@ -98,7 +98,7 @@ put "/api/qrda" do
     patient = build_cqm_patient(idx, test_case)
     patients.push patient # For the summary HTML
 
-    filename = "#{idx+1}_#{patient[:familyName]}_#{patient[:givenNames][0]}"
+    filename = "#{patient[:familyName]}_#{patient[:givenNames][0]}"
 
     # generate QRDA
     begin
