@@ -135,13 +135,14 @@
           <h2>
             <% result = (!pop_fail(test_case) && !strat_fail(test_case)) ? 'pass' : 'fail' %>
             <span class="<%= result %>"><%= result %>: </span>
+            <% if test_case["lastName"] == "" then filename = "#{test_case["firstName"]}" else filename = "#{test_case["lastName"]}_#{test_case["firstName"]}" end %>
             <% unless html_errors[test_case["testCaseId"]] %>
-              <a href="<%= File.join(".","html","#{test_case["lastName"]}_#{test_case["firstName"]}.html")%>"><%=test_case["lastName"]%>, <%=test_case["firstName"]%></a>
+              <a href="<%= File.join(".","html","#{filename}.html")%>"><%=test_case["lastName"]%>, <%=test_case["firstName"]%></a>
             <% else %>
               <%=test_case["lastName"]%>, <%=test_case["firstName"]%>
             <% end %>
             <% unless qrda_errors[test_case["testCaseId"]] %>
-              <a class="btn" href="<%= File.join(".","qrda","#{test_case["lastName"]}_#{test_case["firstName"]}.xml")%>">qrda</a>
+              <a class="btn" href="<%= File.join(".","qrda","#{filename}.xml")%>">qrda</a>
             <% end %>
           </h2>
         </td>
