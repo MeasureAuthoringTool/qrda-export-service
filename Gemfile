@@ -10,6 +10,7 @@ gem 'rack-contrib', '~> 2.5', '>= 2.5.0'
 gem 'jwt'
 gem 'mongoid', '~> 8.1.5'
 gem 'rubyzip', '~> 2.4.0'
+gem 'datadog'
 
 gem 'cqm-models', :git => 'https://github.com/projecttacoma/cqm-models', :branch => 'master'
 
