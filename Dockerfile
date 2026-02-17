@@ -1,6 +1,8 @@
 FROM phusion/passenger-ruby32:3.0.2
 ENV HOME /root
 
+VOLUME /tmp
+
 CMD ["/sbin/my_init"]
 
 # Enable nginx and Passenger
