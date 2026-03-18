@@ -2,13 +2,13 @@ source "https://rubygems.org"
 
 gem 'sinatra', '>= 4.2.0'
 gem 'puma'
-gem 'passenger', '>= 6.1.0'
+gem 'passenger', '>= 6.1.1'
 gem 'rest-client'
-gem 'cqm-reports', '4.1.3'
-gem 'rackup', '~> 2.2', '>= 2.2.0'
+gem 'cqm-reports', '4.1.4'
+gem 'rackup', '~> 2.3', '>= 2.3.0'
 gem 'rack-contrib', '~> 2.5', '>= 2.5.0'
 gem 'jwt'
-gem 'mongoid', '~> 8.1.5'
+gem 'mongoid', '~> 8.1.12'
 gem 'rubyzip', '~> 2.4.0'
 gem 'datadog'
 
