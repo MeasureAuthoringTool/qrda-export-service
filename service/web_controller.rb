@@ -28,6 +28,7 @@ end
 Mongoid.load!("config/mongoid.yml")
 
 use Rack::JSONBodyParser
+Time.zone_default = Time.find_zone!('UTC')
 
 POPULATION_ABBR = {
   "initialPopulation" => "IPP",
