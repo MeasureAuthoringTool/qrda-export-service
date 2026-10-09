@@ -12,6 +12,10 @@ gem 'mongoid', '~> 9.1.1'
 gem 'rubyzip', '~> 3.4.0'
 gem 'datadog', '>= 2.31.0'
 
+# MAT-10345 Temporary override for CVE-2026-71847 remediation.
+# Removes vulnerable json versions < 2.21.2.
+gem 'json', '>= 2.21.2'
+
 gem 'cqm-models', :git => 'https://github.com/projecttacoma/cqm-models', :branch => 'master'
 
 group :test do
