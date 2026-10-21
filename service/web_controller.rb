@@ -72,7 +72,7 @@ put "/api/qrda" do
   content_type 'application/json'
 
   logger.info("Received request at PUT /api/qrda")
-  puts "Received request at PUT /api/qrda"
+
   # TODO probably don't need access token here, will remove after SME confirmation
   access_token = request.env["HTTP_Authorization"]
 
