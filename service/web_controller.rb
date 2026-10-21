@@ -27,7 +27,10 @@ end
 
 Mongoid.load!("config/mongoid.yml")
 
-use Rack::JSONBodyParser
+use Rack::JSONBodyParser do |body|
+  JSON.parse(body)
+end
+
 Time.zone_default = Time.find_zone!('UTC')
 
 POPULATION_ABBR = {
@@ -67,6 +70,8 @@ POPULATION_ABBR = {
 put "/api/qrda" do
   # Set return type
   content_type 'application/json'
+
+  logger.info("Received request at PUT /api/qrda")
 
   # TODO probably don't need access token here, will remove after SME confirmation
   access_token = request.env["HTTP_Authorization"]
