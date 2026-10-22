@@ -104,10 +104,10 @@ put "/api/qrda" do
     patient = build_cqm_patient(idx, test_case)
     patients.push patient # For the summary HTML
 
-    if patient[:familyName] == "" 
-      filename = "#{patient[:givenNames][0]}" 
+    if patient[:familyName] == ""
+      filename = "#{patient[:givenNames][0]}"
     else
-      filename = "#{patient[:familyName]}_#{patient[:givenNames][0]}" 
+      filename = "#{patient[:familyName]}_#{patient[:givenNames][0]}"
     end
 
     # generate QRDA
