@@ -1,4 +1,3 @@
-version: "3"
 services:
   qrda-export-service:
     image: madie/qrda-export-service
