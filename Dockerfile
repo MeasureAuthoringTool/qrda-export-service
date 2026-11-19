@@ -15,7 +15,7 @@ ADD config/webapp.conf /etc/nginx/sites-enabled/webapp.conf
 # Prepare folders
 RUN mkdir /home/app/qrda-export
 
-RUN bash -lc "rvm install ruby-3.4.12 && rvm --default use ruby-3.4.12"
+RUN bash -lc "rvm install ruby-3.4.13 && rvm --default use ruby-3.4.13"
 
 # Add our app
 COPY --chown=app:app . /home/app/qrda-export
